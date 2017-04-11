@@ -1,32 +1,63 @@
 #!/usr/bin/env bash
 
-ANDROID_SDK_FILENAME=android-sdk_r24.2-linux.tgz
-ANDROID_SDK=http://dl.google.com/android/$ANDROID_SDK_FILENAME
+# Android properties
+ANDROID_SDK_TOOLS_VERSION=26.6.2
+ANDROID_SDK_TOOLS_FILENAME=tools_r$ANDROID_SDK_TOOLS_VERSION-linux.zip
+ANDROID_SDK_TOOLS=https://dl.google.com/android/repository/tools_r$ANDROID_SDK_TOOLS_VERSION-linux.zip
 
-#sudo apt-get install python-software-properties
-#sudo add-apt-repository ppa:webupd8team/java
-apt-get update
-apt-get install -y npm git openjdk-7-jdk ant expect
-npm install -g n
-n stable
+#Node properties
+NODE_VERSION=6.10.2
+NODE_FILENAME=node-v$NODE_VERSION-linux-x64.tar.gz
+NODE_DOWNLOAD=https://nodejs.org/download/release/latest-boron/$NODE_FILENAME
+# YARN package
+curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
+echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
+# packages
+PACKAGE_LIST=(
+#    build-essential
+#    tcl
+    unzip
+#    python-software-properties
+    make
+#    git
+    default-jdk
+    ant
+    expect
+    yarn
+)
+echo "---clearing previous logs---"
+[ -e /vagrant/vm_build.log ] && rm /vagrant/vm_build.log
+echo "---updating and installing packages---"
+#build essentials.
+apt-get update >> /dev/null 2>&1
 
-curl -O $ANDROID_SDK
-tar -xzvf $ANDROID_SDK_FILENAME
-sudo chown -R vagrant android-sdk-linux/
+# install all required packages
+apt-get install -y ${PACKAGE_LIST[@]} >> /vagrant/vm_build.log 2>&1
 
-echo "ANDROID_HOME=~/android-sdk-linux" >> /home/vagrant/.bashrc
-echo "export JAVA_HOME=/usr/lib/jvm/java-7-openjdk-i386" >> /home/vagrant/.bashrc
-echo "PATH=\$PATH:~/android-sdk-linux/tools:~/android-sdk-linux/platform-tools" >> /home/vagrant/.bashrc
-
-npm install -g cordova
-npm install -g ionic
+echo "---installing Android SDK---"
+(cd /tmp; curl -sSO $ANDROID_SDK_TOOLS >> /vagrant/vm_build.log 2>&1)
+(cd /tmp; unzip -q $ANDROID_SDK_TOOLS_FILENAME -d /home/vagrant/android-sdk/)
+chown -R ubuntu /home/vagrant/android-sdk/
+echo "---setting path variables---"
+echo "ANDROID_HOME=/home/vagrant/android-sdk" >> /home/vagrant/.bashrc
+echo "PATH=\$PATH:/home/vagrant/android-sdk/tools:/home/vagrant/android-sdk/platform-tools" >> /home/vagrant/.bashrc
 expect -c '
 set timeout -1   ;
-spawn /home/vagrant/android-sdk-linux/tools/android update sdk -u --all --filter platform-tool,android-22,build-tools-22.0.1
+spawn /home/vagrant/android-sdk/tools/bin/sdkmanager "platforms;android-25" "build-tools;25.0.2" "platform-tools"
 expect { 
-    "Do you accept the license" { exp_send "y\r" ; exp_continue }
+    "Accept? (y/N):" { exp_send "y\r" ; exp_continue }
     eof
 }
-'
+' >> /vagrant/vm_build.log 2>&1
 
-#sudo gem install sass
+echo "---installing nodejs---"
+mkdir /home/vagrant/nodejs
+(cd /tmp; curl -sSO $NODE_DOWNLOAD >> /vagrant/vm_build.log 2>&1)
+(cd /tmp; tar -C /home/vagrant/nodejs/ --strip-components 1 -xzf $NODE_FILENAME)
+echo "PATH=\$PATH:/home/vagrant/nodejs/bin" >> /home/vagrant/.bashrc
+
+echo "---installing cordova and ionic globally---"
+export PATH=\$PATH:/home/vagrant/nodejs/bin
+yarn global add cordova ionic >> /vagrant/vm_build.log 2>&1
+chown -R ubuntu /home/vagrant/nodejs
+echo '---machine provisioned---'
