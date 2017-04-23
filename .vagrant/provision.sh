@@ -63,5 +63,5 @@ chown -R ubuntu /home/vagrant/nodejs
 echo '---machine provisioned---'
 
 echo "---installing advanced angular seed dependencies---"
-yarn install >> /vagrant/vm_build.log 2>&1
+(cd /vagrant; yarn install >> /vagrant/vm_build.log 2>&1)
 echo '---advanced angular seed dependencies installed---'
