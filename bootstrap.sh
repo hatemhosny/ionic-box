@@ -56,8 +56,12 @@ mkdir /home/vagrant/nodejs
 (cd /tmp; tar -C /home/vagrant/nodejs/ --strip-components 1 -xzf $NODE_FILENAME)
 echo "PATH=\$PATH:/home/vagrant/nodejs/bin" >> /home/vagrant/.bashrc
 
-echo "---installing cordova and ionic globally---"
+echo "---installing nativescript and typescript globally---"
 export PATH=\$PATH:/home/vagrant/nodejs/bin
-yarn global add cordova ionic >> /vagrant/vm_build.log 2>&1
+yarn global add nativescript typescript >> /vagrant/vm_build.log 2>&1
 chown -R ubuntu /home/vagrant/nodejs
 echo '---machine provisioned---'
+
+echo "---installing advanced angular seed dependencies---"
+yarn install >> /vagrant/vm_build.log 2>&1
+echo '---advanced angular seed dependencies installed---'
