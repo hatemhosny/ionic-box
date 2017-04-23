@@ -13,7 +13,7 @@ Vagrant.configure("2") do |config|
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://atlas.hashicorp.com/search.
   config.vm.box = "ubuntu/xenial64"
-  config.vm.hostname = "ionic-vagrant"
+  config.vm.hostname = "advanced-seed"
 
   # vagrant username and password
   config.ssh.username = "vagrant"
@@ -77,5 +77,5 @@ Vagrant.configure("2") do |config|
   #   apt-get install -y apache2
   # SHELL
 
-  config.vm.provision :shell, path: "bootstrap.sh"
+  config.vm.provision :shell, path: "./.vagrant/provision.sh"
 end
